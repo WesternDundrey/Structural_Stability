@@ -56,4 +56,33 @@ def calculate_bending_moment(self, x):
                     moment += load[1] * (x-load[2])**2 / 2
                 else: 
                     moment += load[1] * (load[3]-load[2])*(x - (load[2] + (load[3] - load[2]) / 2))
-        
+        return moment
+def plot_diagrams(self):
+    x = np.linspace(0, self.length, 1000)
+    shear = [self.calculate_shear_force(xi) for xi in x]
+    moment = [self.calculate_bending_moment(xi) for xi in x]
+
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize = (10,8))
+
+    
+    ax1.plot(x, shear)
+    ax1.set_title("Shear Force Diagram")
+    ax1.set_xlabel("Position along beam (m)")
+    ax1.set_ylabel("Shear Force (N)")
+    ax1.grid(True)
+
+    ax2.plot(x, moment)
+    ax2.set_title("Bending Moment Diagram")
+    ax2.set_xlabel("Position along beam (m)")
+    ax2.set_ylabel("Bending Moment (N·m)")
+    ax2.grid(True)
+
+    plt.tight_layout()
+    plt.show()
+
+beam = Beam(10)  # 10 meter long beam
+beam.add_point_load(1000, 3)  # 1000 N point load at 3 meters
+beam.add_distributed_load(500, 6, 10)  # 500 N/m distributed load from 6 to 10 meters
+
+print("Reactions:", beam.calculate_reactions())
+beam.plot_diagrams()
