@@ -44,4 +44,16 @@ def calculate_shear_force(self, x):
 
     return shear
 
-def calculate_bending_moment
+def calculate_bending_moment(self, x):
+    moment = -self.calculate_reactions()[0]* x
+
+    for load in self.loads:
+        if load[0] == "point" and x > load[2]:
+            moment += load[1]* (x-load[2])
+        elif load[0] == "distributed":
+            if x> load[2]:
+                if x< load[3]:
+                    moment += load[1] * (x-load[2])**2 / 2
+                else: 
+                    moment += load[1] * (load[3]-load[2])*(x - (load[2] + (load[3] - load[2]) / 2))
+        
