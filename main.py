@@ -1,5 +1,129 @@
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
+import tkinter as tk
+from tkinter import ttk
+
+
+
+class BeamAnalysisGUI:
+    def __init__(self, master):
+        self.master = master
+        self.master.title("Beam Analysis Tool")
+        self.master.geometry("800x600")
+
+        self.beam = None
+        self.load_entries = []
+
+        self.create_widgets()
+    def create_widgets(self):
+        # Beam length input
+        ttk.Label(self.master, text="Beam Length (m):").grid(row=0, column=0, padx=5, pady=5)
+        self.length_entry = ttk.Entry(self.master)
+        self.length_entry.grid(row=0, column=1, padx=5, pady=5)
+
+        # Load type selection
+        ttk.Label(self.master, text="Load Type:").grid(row=1, column=0, padx=5, pady=5)
+        self.load_type = ttk.Combobox(self.master, values=["Point Load", "Distributed Load"])
+        self.load_type.grid(row=1, column=1, padx=5, pady=5)
+
+        # Add load button
+        ttk.Button(self.master, text="Add Load", command=self.add_load_fields).grid(row=2, column=0, columnspan=2, padx=5, pady=5)
+
+        # Analyze button
+        ttk.Button(self.master, text="Analyze Beam", command=self.analyze_beam).grid(row=3, column=0, columnspan=2, padx=5, pady=5)
+
+        # Frame for load inputs
+        self.load_frame = ttk.Frame(self.master)
+        self.load_frame.grid(row=4, column=0, columnspan=2, padx=5, pady=5)
+
+        # Frame for plots
+        self.plot_frame = ttk.Frame(self.master)
+        self.plot_frame.grid(row=0, column=2, rowspan=5, padx=5, pady=5)
+
+    def add_load_fields(self):
+        load_type = self.load_type.get()
+        row = len(self.load_entries)
+
+        if load_type == "Point Load":
+            ttk.Label(self.load_frame, text="Magnitude (N):").grid(row=row, column=0)
+            magnitude = ttk.Entry(self.load_frame)
+            magnitude.grid(row=row, column=1)
+
+            ttk.Label(self.load_frame, text="Position (m):").grid(row=row, column=2)
+            position = ttk.Entry(self.load_frame)
+            position.grid(row=row, column=3)
+
+            self.load_entries.append((load_type, magnitude, position))
+
+        elif load_type == "Distributed Load":
+            ttk.Label(self.load_frame, text="Magnitude (N/m):").grid(row=row, column=0)
+            magnitude = ttk.Entry(self.load_frame)
+            magnitude.grid(row=row, column=1)
+
+            ttk.Label(self.load_frame, text="Start (m):").grid(row=row, column=2)
+            start = ttk.Entry(self.load_frame)
+            start.grid(row=row, column=3)
+
+            ttk.Label(self.load_frame, text="End (m):").grid(row=row, column=4)
+            end = ttk.Entry(self.load_frame)
+            end.grid(row=row, column=5)
+
+            self.load_entries.append((load_type, magnitude, start, end))
+
+    def analyze_beam(self):
+        try:
+            length = float(self.length_entry.get())
+            self.beam = Beam(length)
+
+            for load_entry in self.load_entries:
+                if load_entry[0] == "Point Load":
+                    magnitude = float(load_entry[1].get())
+                    position = float(load_entry[2].get())
+                    self.beam.add_point_load(magnitude, position)
+                elif load_entry[0] == "Distributed Load":
+                    magnitude = float(load_entry[1].get())
+                    start = float(load_entry[2].get())
+                    end = float(load_entry[3].get())
+                    self.beam.add_distributed_load(magnitude, start, end)
+
+            self.plot_diagrams()
+
+        except ValueError:
+            tk.messagebox.showerror("Error", "Invalid input. Please check all entries.")
+
+    def plot_diagrams(self):
+        fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(8, 6))
+
+        x = np.linspace(0, self.beam.length, 1000)
+        shear = [self.beam.calculate_shear_force(xi) for xi in x]
+        moment = [self.beam.calculate_bending_moment(xi) for xi in x]
+
+        ax1.plot(x, shear)
+        ax1.set_title("Shear Force Diagram")
+        ax1.set_xlabel("Position along beam (m)")
+        ax1.set_ylabel("Shear Force (N)")
+        ax1.grid(True)
+
+        ax2.plot(x, moment)
+        ax2.set_title("Bending Moment Diagram")
+        ax2.set_xlabel("Position along beam (m)")
+        ax2.set_ylabel("Bending Moment (N·m)")
+        ax2.grid(True)
+
+        plt.tight_layout()
+
+        for widget in self.plot_frame.winfo_children():
+            widget.destroy()
+
+        canvas = FigureCanvasTkAgg(fig, master=self.plot_frame)
+        canvas.draw()
+        canvas.get_tk_widget().pack()
+
+        reactions = self.beam.calculate_reactions()
+        tk.Label(self.plot_frame, text=f"Reaction at A: {reactions[0]:.2f} N").pack()
+        tk.Label(self.plot_frame, text=f"Reaction at B: {reactions[1]:.2f} N").pack()
+
 
 class Beam:
     def __init__(self, length):
