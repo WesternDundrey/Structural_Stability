@@ -23,4 +23,25 @@ def calculate_reactions(self):
         elif load[0] == 'distributed':
             force = load[1] * (load[3] - load[2])
             total_force += force 
-            total_moment += force (load[2] + (load[3])
+            total_moment += force (load[2] + (load[3]- load[2]) / 2)
+        
+    reaction_b = total_moment / self.length
+    reaction_a = total_force - reaction_b
+
+    return reaction_a, reaction_b
+
+def calculate_shear_force(self, x):
+    shear = -self.calculate_reactions()[0]
+
+    for load in self.loads:
+        if load[0] == "point" and x > load[2]:
+            shear =+ load[1]
+        elif load[0] == "distributed":
+            if x < load[3]:
+                shear += load[1] * (x -load[2])
+            else: 
+                shear += load[1] * (load[3]- load[2])
+
+    return shear
+
+def calculate_bending_moment
