@@ -7,3 +7,20 @@ class Beam:
         self.loads = []
 
 def add_point_load(self, magnitude, position):
+    self.loads.append(("point", magnitude, position))
+
+def add_distributed_load(self, magnitude, start, end):
+    self.loads.append(("distributed", magnitude, start, end))
+
+def calculate_reactions(self):
+    total_force = 0
+    total_moment = 0
+
+    for load in self.loads:
+        if load[0] == 'point':
+            total_force +=  load[1]
+            total_moment += load[1] * load[2]
+        elif load[0] == 'distributed':
+            force = load[1] * (load[3] - load[2])
+            total_force += force 
+            total_moment += force (load[2] + (load[3])
